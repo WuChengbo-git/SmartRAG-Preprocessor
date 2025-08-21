@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Layout as AntLayout, Menu, theme, Typography, Space, Badge } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { getVersionDisplay } from '../utils/version';
 import {
   DashboardOutlined,
   UploadOutlined,
@@ -170,7 +171,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <span>•</span>
             <span>処理済み: 0 ファイル</span>
             <span>•</span>
-            <span>バージョン: v1.0.0</span>
+            <span>バージョン: {getVersionDisplay()}</span>
           </Space>
         </Footer>
       </AntLayout>

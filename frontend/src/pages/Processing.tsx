@@ -288,97 +288,94 @@ const Processing: React.FC = () => {
   return (
     <div>
       <Title level={2} style={{ marginBottom: 24 }}>
-        ドキュメント処理
+        処理モニタリング
       </Title>
       
+      <Alert
+        message="処理の進行状況"
+        description="アップロードされたファイルの処理状況をリアルタイムで確認できます。処理設定は「ファイル管理」ページで行ってください。"
+        type="info"
+        style={{ marginBottom: 16 }}
+      />
+      
       <Row gutter={16}>
-        <Col span={8}>
+        <Col span={24}>
           <Card 
             title={
               <Space>
                 <SettingOutlined />
-                処理設定
+                処理キューと進行状況
               </Space>
             }
-            extra={<BulbOutlined />}
+            extra={
+              <Space>
+                <Text type="secondary">リアルタイム更新</Text>
+                <Button size="small" icon={<PlayCircleOutlined />}>
+                  全て再開
+                </Button>
+                <Button size="small" icon={<PauseCircleOutlined />}>
+                  全て一時停止
+                </Button>
+              </Space>
+            }
           >
-            <Form form={form} layout="vertical" size="middle">
-              <Form.Item 
-                label="分割方法" 
-                name="chunkMethod"
-                initialValue="paragraph"
-              >
-                <Select>
-                  {chunkMethods.map(method => (
-                    <Option key={method.value} value={method.value}>
-                      <div style={{ lineHeight: '1.2' }}>
-                        <div style={{ marginBottom: '2px' }}>
-                          {method.label}
-                        </div>
-                        <Text type="secondary" style={{ fontSize: '12px', lineHeight: '1.2' }}>
-                          {method.description}
-                        </Text>
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              
-              <Form.Item 
-                label="チャンクサイズ" 
-                name="chunkSize"
-                initialValue={500}
-              >
-                <InputNumber 
-                  min={100} 
-                  max={2000} 
-                  step={100} 
-                  style={{ width: '100%' }}
-                  addonAfter="文字"
-                />
-              </Form.Item>
-              
-              <Form.Item 
-                label="オーバーラップ" 
-                name="chunkOverlap"
-                initialValue={50}
-              >
-                <InputNumber 
-                  min={0} 
-                  max={500} 
-                  step={10} 
-                  style={{ width: '100%' }}
-                  addonAfter="文字"
-                />
-              </Form.Item>
-              
-              <Alert 
-                message="推奨設定"
-                description="一般的なドキュメントには段落ごとの分割とチャンクサイズ500文字を推奨します。"
-                type="info"
-                style={{ marginBottom: 16 }}
-              />
-              
-              <Button 
-                type="primary" 
-                block
-                icon={<PlayCircleOutlined />}
-              >
-                すべてのファイルを処理
-              </Button>
-            </Form>
-          </Card>
-        </Col>
-        
-        <Col span={16}>
-          <Card title="処理キュー" extra={<Text type="secondary">リアルタイム更新</Text>}>
             <Table 
               columns={columns} 
               dataSource={tasks} 
               rowKey="id"
-              pagination={false}
+              pagination={{ 
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => 
+                  `${range[0]}-${range[1]} / ${total} 件`
+              }}
               size="middle"
             />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 処理統計情報 */}
+      <Row gutter={16} style={{ marginTop: 16 }}>
+        <Col span={6}>
+          <Card size="small">
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>
+                {tasks.filter(t => t.status === 'completed').length}
+              </div>
+              <div style={{ color: '#666' }}>完了</div>
+            </div>
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff' }}>
+                {tasks.filter(t => t.status === 'processing').length}
+              </div>
+              <div style={{ color: '#666' }}>処理中</div>
+            </div>
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#faad14' }}>
+                {tasks.filter(t => t.status === 'waiting').length}
+              </div>
+              <div style={{ color: '#666' }}>待機中</div>
+            </div>
+          </Card>
+        </Col>
+        <Col span={6}>
+          <Card size="small">
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ff4d4f' }}>
+                {tasks.filter(t => t.status === 'failed').length}
+              </div>
+              <div style={{ color: '#666' }}>失敗</div>
+            </div>
           </Card>
         </Col>
       </Row>
@@ -403,6 +400,22 @@ const Processing: React.FC = () => {
                     <Text strong>チャンク数:</Text>
                     <br />
                     <Text>{selectedTask.chunks} チャンク</Text>
+                  </Col>
+                </Row>
+                <Row gutter={16} style={{ marginTop: 16 }}>
+                  <Col span={12}>
+                    <Text strong>処理設定:</Text>
+                    <br />
+                    <Text>サイズ: {selectedTask.config.chunkSize}文字</Text>
+                    <br />
+                    <Text>方法: {chunkMethods.find(m => m.value === selectedTask.config.chunkMethod)?.label}</Text>
+                  </Col>
+                  <Col span={12}>
+                    <Text strong>処理時間:</Text>
+                    <br />
+                    <Text>開始: {selectedTask.startTime}</Text>
+                    <br />
+                    <Text>終了: {selectedTask.endTime}</Text>
                   </Col>
                 </Row>
               </Card>

@@ -1,11 +1,25 @@
 # SmartRAG Preprocessor
 
+[![Version](https://img.shields.io/badge/version-0.0.2-blue.svg)](https://github.com/your-username/SmartRAG-Preprocessor/releases)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://python.org)
+[![Node.js](https://img.shields.io/badge/node.js-18+-green.svg)](https://nodejs.org)
+[![Docker](https://img.shields.io/badge/docker-supported-blue.svg)](https://docker.com)
+
 🚀 支持多格式文档自动分块、可视化编辑、结构化导出及一键入库的RAG专用预处理工具
 
 [日本語 README](README_JP.md)
 
 ## ✨ 功能特性
 
+### 🆕 v1.0.1 新功能
+- 📁 **2层文件夹管理** - 项目/子文件夹结构化组织
+- 🔧 **父子块设置** - 两层级块结构，提升检索精度
+- 📝 **全文对照编辑** - 左侧全文右侧块列表同步编辑
+- 🏷️ **元数据管理** - 文档和块级别的详细信息管理
+- 📊 **处理监控增强** - 实时统计和批量操作支持
+
+### 🎯 核心功能
 - 📄 **多格式文档支持** - PDF, Word, Excel, PowerPoint, TXT, HTML, CSV
 - 🔄 **智能分块处理** - 按段落、页面、标题等多种方式分块
 - ✏️ **可视化编辑器** - HTML/Markdown双模式编辑
@@ -150,6 +164,30 @@ docker-compose down
 ```
 
 ## 🛠️ 开发指南
+
+### 版本管理
+
+统一版本管理，一个命令同步所有文件版本：
+
+```bash
+# 自动升级版本（推荐）
+npm run version:patch  # 0.0.2 → 0.0.3 (补丁版本)
+npm run version:minor  # 0.0.2 → 0.1.0 (小版本)
+npm run version:major  # 0.0.2 → 1.0.0 (大版本)
+
+# 手动指定版本
+npm run version:update 0.0.3
+
+# 当前版本：0.0.2
+```
+
+**自动更新的文件：**
+- `package.json` (根目录)
+- `frontend/package.json`
+- `backend/pyproject.toml`
+- `VERSION` 文件
+- `README.md` 版本徽章
+- UI界面版本显示
 
 ### 后端开发
 

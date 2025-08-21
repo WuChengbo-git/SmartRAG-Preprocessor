@@ -1,0 +1,59 @@
+{
+  "name": "smartrag-preprocessor",
+  "version": "0.0.2",
+  "description": "SmartRAG document preprocessor - RAG system preprocessing tool",
+  "scripts": {
+    "start": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && uvicorn main:app --reload --port 8090",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && echo 'Backend build completed'",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && pip install -e .",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && pytest",
+    "lint": "npm run lint:frontend && npm run lint:backend",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:backend": "cd backend && flake8 .",
+    "format": "npm run format:frontend && npm run format:backend",
+    "format:frontend": "cd frontend && npm run lint",
+    "format:backend": "cd backend && black . && isort .",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down",
+    "version:update": "node scripts/update-version.js",
+    "version:patch": "npm version patch --no-git-tag-version && node scripts/update-version.js $(node -p \"require('./package.json').version\")",
+    "version:minor": "npm version minor --no-git-tag-version && node scripts/update-version.js $(node -p \"require('./package.json').version\")",
+    "version:major": "npm version major --no-git-tag-version && node scripts/update-version.js $(node -p \"require('./package.json').version\")"
+  },
+  "keywords": [
+    "RAG",
+    "document-processing",
+    "chunk-splitting",
+    "preprocessing",
+    "fastapi",
+    "react",
+    "typescript",
+    "elasticsearch",
+    "dify"
+  ],
+  "author": "SmartRAG Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/SmartRAG-Preprocessor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/SmartRAG-Preprocessor/issues"
+  },
+  "homepage": "https://github.com/your-username/SmartRAG-Preprocessor#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
