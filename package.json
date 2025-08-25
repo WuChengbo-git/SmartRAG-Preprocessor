@@ -1,6 +1,6 @@
 {
   "name": "smartrag-preprocessor",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "SmartRAG document preprocessor - RAG system preprocessing tool",
   "scripts": {
     "start": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",

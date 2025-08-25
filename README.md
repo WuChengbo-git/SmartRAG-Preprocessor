@@ -1,6 +1,6 @@
 # SmartRAG Preprocessor
 
-[![Version](https://img.shields.io/badge/version-0.0.2-blue.svg)](https://github.com/your-username/SmartRAG-Preprocessor/releases)
+[![Version](https://img.shields.io/badge/version-0.0.3-blue.svg)](https://github.com/your-username/SmartRAG-Preprocessor/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://python.org)
 [![Node.js](https://img.shields.io/badge/node.js-18+-green.svg)](https://nodejs.org)
@@ -253,25 +253,3 @@ npm run lint
 3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 创建 Pull Request
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
-
-## 🆘 问题反馈
-
-如果遇到问题或有建议，请通过以下方式联系：
-
-- 📧 **邮件**: [your-email@example.com]
-- 🐛 **Bug反馈**: [GitHub Issues](https://github.com/your-username/smartrag-preprocessor/issues)
-- 💬 **讨论**: [GitHub Discussions](https://github.com/your-username/smartrag-preprocessor/discussions)
-
-## 🙏 致谢
-
-感谢所有贡献者和使用者对本项目的支持！
-
----
-
-<div align="center">
-Made with ❤️ by SmartRAG Team
-</div>

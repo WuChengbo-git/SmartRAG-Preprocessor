@@ -273,3 +273,17 @@ out/
 
 # Poetry
 poetry.lock
+
+# Release templates (keep local only)
+RELEASE_NOTES_TEMPLATE.md
+RELEASE_TEMPLATE.md
+STARTUP_GUIDE.md
+
+# Frontend build
+frontend/dist/
+frontend/.vite/
+
+# Backend uploads and data
+backend/uploads/
+backend/smartrag.db
+backend/*.log

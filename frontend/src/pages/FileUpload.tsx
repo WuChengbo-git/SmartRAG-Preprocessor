@@ -7,7 +7,6 @@ import {
   Typography, 
   Button, 
   Table, 
-  Progress,
   Tag,
   Space,
   message,
@@ -18,17 +17,12 @@ import {
   Form,
   Input,
   Select,
-  InputNumber,
-  Divider,
-  Alert,
-  Collapse,
-  Switch
+  Spin,
 } from 'antd';
 import { 
   InboxOutlined, 
   DeleteOutlined, 
   EyeOutlined, 
-  SettingOutlined as ProcessorOutlined,
   FileTextOutlined,
   FilePdfOutlined,
   FileWordOutlined,
@@ -36,16 +30,14 @@ import {
   FilePptOutlined,
   FileOutlined,
   FolderOutlined,
-  FolderOpenOutlined,
   PlusOutlined,
-  PlayCircleOutlined,
-  BulbOutlined
+  CheckCircleOutlined,
+  LoadingOutlined
 } from '@ant-design/icons';
 import type { UploadProps } from 'antd/es/upload/interface';
 
 const { Title, Text } = Typography;
 const { Dragger } = Upload;
-const { Panel } = Collapse;
 
 interface FileItem {
   id: string;
@@ -53,9 +45,7 @@ interface FileItem {
   type: string;
   size: number;
   status: 'uploading' | 'done' | 'error';
-  progress: number;
   uploadTime: string;
-  chunks?: number;
   folderId: string;
 }
 
@@ -67,20 +57,10 @@ interface FolderItem {
   files?: FileItem[];
 }
 
-interface ChunkConfig {
-  method: string;
-  size: number;
-  overlap: number;
-  parentChunk: boolean;
-  parentMethod: string;
-  parentSize: number;
-  parentOverlap: number;
-}
 
 const FileUpload: React.FC = () => {
   const [form] = Form.useForm();
   const [selectedFolderId, setSelectedFolderId] = useState<string>('1');
-  const [configModalVisible, setConfigModalVisible] = useState(false);
   const [newFolderModalVisible, setNewFolderModalVisible] = useState(false);
   const [expandedKeys, setExpandedKeys] = useState<string[]>(['1']);
   
@@ -110,9 +90,7 @@ const FileUpload: React.FC = () => {
       type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       size: 2048000,
       status: 'done',
-      progress: 100,
       uploadTime: '2024-01-15 14:30',
-      chunks: 25,
       folderId: '1-1'
     },
     {
@@ -121,7 +99,6 @@ const FileUpload: React.FC = () => {
       type: 'application/pdf',
       size: 5120000,
       status: 'uploading',
-      progress: 65,
       uploadTime: '2024-01-15 14:25',
       folderId: '1-2'
     },
@@ -131,38 +108,11 @@ const FileUpload: React.FC = () => {
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       size: 1024000,
       status: 'done',
-      progress: 100,
       uploadTime: '2024-01-15 13:15',
-      chunks: 18,
       folderId: '2-2'
     }
   ]);
   
-  const [chunkConfig, setChunkConfig] = useState<ChunkConfig>({
-    method: 'paragraph',
-    size: 500,
-    overlap: 50,
-    parentChunk: true,
-    parentMethod: 'document',
-    parentSize: 1000,
-    parentOverlap: 100
-  });
-
-  const chunkMethods = [
-    { value: 'paragraph', label: '段落ごと', description: 'テキストを段落単位で分割' },
-    { value: 'page', label: 'ページごと', description: 'ドキュメントをページ単位で分割' },
-    { value: 'heading', label: '見出しごと', description: '見出しを基準にして分割' },
-    { value: 'sentence', label: '文章ごと', description: '文章単位で分割' },
-    { value: 'token', label: 'トークンごと', description: 'トークン数を基準にして分割' }
-  ];
-
-  const parentChunkMethods = [
-    { value: 'document', label: 'ドキュメント全体', description: '文書全体を一つの親チャンクとして扱う' },
-    { value: 'section', label: 'セクションごと', description: '大きなセクション単位で分割' },
-    { value: 'page_group', label: 'ページ群ごと', description: '複数ページをまとめて分割' },
-    { value: 'token_large', label: '大きなトークン単位', description: '大きなトークン数で分割' },
-    { value: 'fixed_size', label: '固定サイズ', description: '指定された文字数で分割' }
-  ];
 
   const getFileIcon = (type: string) => {
     if (type.includes('pdf')) return <FilePdfOutlined style={{ color: '#ff4d4f' }} />;
@@ -181,12 +131,12 @@ const FileUpload: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getStatusTag = (status: string) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'done': return <Tag color="success">完了</Tag>;
-      case 'uploading': return <Tag color="processing">アップロード中</Tag>;
-      case 'error': return <Tag color="error">エラー</Tag>;
-      default: return <Tag color="default">待機中</Tag>;
+      case 'done': return <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 16 }} />;
+      case 'uploading': return <Spin indicator={<LoadingOutlined style={{ fontSize: 16 }} />} />;
+      case 'error': return <CheckCircleOutlined style={{ color: '#ff4d4f', fontSize: 16 }} />;
+      default: return null;
     }
   };
 
@@ -213,14 +163,13 @@ const FileUpload: React.FC = () => {
           type: info.file.type || 'application/octet-stream',
           size: info.file.size || 0,
           status: 'uploading',
-          progress: info.file.percent || 0,
           uploadTime: new Date().toLocaleString('ja-JP'),
           folderId: selectedFolderId
         };
         setFileList(prev => {
           const exists = prev.find(f => f.id === newFile.id);
           if (exists) {
-            return prev.map(f => f.id === newFile.id ? { ...f, progress: newFile.progress } : f);
+            return prev.map(f => f.id === newFile.id ? { ...f, status: 'uploading' } : f);
           }
           return [...prev, { ...newFile, folderId: selectedFolderId }];
         });
@@ -228,14 +177,14 @@ const FileUpload: React.FC = () => {
         message.success(`${info.file.name} のアップロードが完了しました。`);
         setFileList(prev => prev.map(f => 
           f.id === info.file.uid 
-            ? { ...f, status: 'done', progress: 100 }
+            ? { ...f, status: 'done' }
             : f
         ));
       } else if (status === 'error') {
         message.error(`${info.file.name} のアップロードに失敗しました。`);
         setFileList(prev => prev.map(f => 
           f.id === info.file.uid 
-            ? { ...f, status: 'error', progress: 0 }
+            ? { ...f, status: 'error' }
             : f
         ));
       }
@@ -250,9 +199,6 @@ const FileUpload: React.FC = () => {
     message.success('ファイルを削除しました');
   };
 
-  const handleProcess = (_id: string) => {
-    setConfigModalVisible(true);
-  };
   
   const handleCreateFolder = (values: { name: string; parentId?: string }) => {
     const newFolder: FolderItem = {
@@ -312,15 +258,6 @@ const FileUpload: React.FC = () => {
   const getCurrentFolderFiles = (): FileItem[] => {
     return getFilesInFolder(selectedFolderId);
   };
-  
-  const handleStartBatchProcessing = () => {
-    const readyFiles = getCurrentFolderFiles().filter(f => f.status === 'done');
-    if (readyFiles.length === 0) {
-      message.warning('処理可能なファイルがありません');
-      return;
-    }
-    setConfigModalVisible(true);
-  };
 
   const columns = [
     {
@@ -344,16 +281,12 @@ const FileUpload: React.FC = () => {
       title: '状態',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string, record: FileItem) => (
-        <div>
-          {getStatusTag(status)}
-          {status === 'uploading' && (
-            <Progress 
-              percent={record.progress} 
-              size="small" 
-              style={{ marginTop: 4 }}
-            />
-          )}
+      render: (status: string) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {getStatusIcon(status)}
+          <span style={{ fontSize: '12px', color: '#666' }}>
+            {status === 'uploading' ? 'アップロード中' : status === 'done' ? '完了' : status === 'error' ? 'エラー' : ''}
+          </span>
         </div>
       ),
     },
@@ -361,12 +294,6 @@ const FileUpload: React.FC = () => {
       title: 'アップロード時間',
       dataIndex: 'uploadTime',
       key: 'uploadTime',
-    },
-    {
-      title: 'チャンク数',
-      dataIndex: 'chunks',
-      key: 'chunks',
-      render: (chunks: number) => chunks ? `${chunks} チャンク` : '-',
     },
     {
       title: '操作',
@@ -379,15 +306,6 @@ const FileUpload: React.FC = () => {
               icon={<EyeOutlined />} 
               size="small"
               disabled={record.status !== 'done'}
-            />
-          </Tooltip>
-          <Tooltip title="処理">
-            <Button 
-              type="text" 
-              icon={<ProcessorOutlined />} 
-              size="small"
-              disabled={record.status !== 'done'}
-              onClick={() => handleProcess(record.id)}
             />
           </Tooltip>
           <Tooltip title="削除">
@@ -436,6 +354,8 @@ const FileUpload: React.FC = () => {
               </Button>
             }
             size="small"
+            style={{ height: '100%' }}
+            bodyStyle={{ height: 'calc(100% - 57px)', overflow: 'auto' }}
           >
             <Tree
               showIcon
@@ -454,7 +374,7 @@ const FileUpload: React.FC = () => {
         </Col>
         
         <Col span={18}>
-          <Space direction="vertical" style={{ width: '100%' }} size="middle">
+          <Space direction="vertical" style={{ width: '100%', height: '100%' }} size="middle">
             <Card 
               title="ファイルアップロード" 
               extra={
@@ -479,25 +399,9 @@ const FileUpload: React.FC = () => {
             
             <Card 
               title={
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center'
-                }}>
-                  <Title level={4} style={{ margin: 0 }}>
-                    現在のフォルダ内ファイル ({getCurrentFolderFiles().length})
-                  </Title>
-                  <Space>
-                    <Button 
-                      type="primary" 
-                      icon={<PlayCircleOutlined />}
-                      disabled={getCurrentFolderFiles().filter(f => f.status === 'done').length === 0}
-                      onClick={handleStartBatchProcessing}
-                    >
-                      一括処理開始
-                    </Button>
-                  </Space>
-                </div>
+                <Title level={4} style={{ margin: 0 }}>
+                  現在のフォルダ内ファイル ({getCurrentFolderFiles().length})
+                </Title>
               }
             >
               <Table 
@@ -517,199 +421,6 @@ const FileUpload: React.FC = () => {
           </Space>
         </Col>
       </Row>
-      
-      {/* チャンク設定モーダル */}
-      <Modal
-        title="チャンク分割設定"
-        open={configModalVisible}
-        onCancel={() => setConfigModalVisible(false)}
-        width={600}
-        footer={[
-          <Button key="cancel" onClick={() => setConfigModalVisible(false)}>
-            キャンセル
-          </Button>,
-          <Button key="submit" type="primary" onClick={() => {
-            setConfigModalVisible(false);
-            message.success('処理を開始しました');
-          }}>
-            処理開始
-          </Button>
-        ]}
-      >
-        <Collapse defaultActiveKey={['1', '2']} size="small">
-          <Panel header={
-            <Space>
-              <BulbOutlined />
-              基本設定
-            </Space>
-          } key="1">
-            <Form form={form} layout="vertical" size="small">
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item 
-                    label="分割手法" 
-                    name="chunkMethod"
-                    initialValue={chunkConfig.method}
-                  >
-                    <Select>
-                      {chunkMethods.map(method => (
-                        <Select.Option key={method.value} value={method.value}>
-                          <div>
-                            <div>{method.label}</div>
-                            <Text type="secondary" style={{ fontSize: '11px' }}>
-                              {method.description}
-                            </Text>
-                          </div>
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item 
-                    label="チャンクサイズ" 
-                    name="chunkSize"
-                    initialValue={chunkConfig.size}
-                  >
-                    <InputNumber 
-                      min={100} 
-                      max={2000} 
-                      step={100} 
-                      style={{ width: '100%' }}
-                      addonAfter="文字"
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item 
-                    label="オーバーラップ" 
-                    name="chunkOverlap"
-                    initialValue={chunkConfig.overlap}
-                  >
-                    <InputNumber 
-                      min={0} 
-                      max={500} 
-                      step={10} 
-                      style={{ width: '100%' }}
-                      addonAfter="文字"
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-            </Form>
-          </Panel>
-          
-          <Panel header="親子チャンク設定" key="2">
-            <Alert 
-              message="親子チャンクとは"
-              description="大きなチャンク（親）と小さなチャンク（子）の2階層構造で、より精度の高い検索を実現します。親チャンクで大まかなコンテキストを把握し、子チャンクで詳細な情報を取得できます。"
-              type="info"
-              style={{ marginBottom: 16 }}
-            />
-            <Form layout="vertical" size="small">
-              <Form.Item 
-                label="親子チャンクを使用する"
-                name="parentChunk"
-                valuePropName="checked"
-                initialValue={chunkConfig.parentChunk}
-              >
-                <Switch 
-                  onChange={(checked) => {
-                    form.setFieldsValue({ parentChunk: checked });
-                    // 強制的にフォームを再レンダリング
-                    setChunkConfig(prev => ({ ...prev, parentChunk: checked }));
-                  }}
-                />
-              </Form.Item>
-              
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item 
-                    label="親チャンク分割方法" 
-                    name="parentMethod"
-                    initialValue={chunkConfig.parentMethod}
-                  >
-                    <Select 
-                      disabled={!chunkConfig.parentChunk}
-                      onChange={(value) => {
-                        form.setFieldsValue({ parentMethod: value });
-                      }}
-                    >
-                      {parentChunkMethods.map(method => (
-                        <Select.Option key={method.value} value={method.value}>
-                          <div>
-                            <div>{method.label}</div>
-                            <Text type="secondary" style={{ fontSize: '11px' }}>
-                              {method.description}
-                            </Text>
-                          </div>
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item 
-                    label="親チャンクサイズ" 
-                    name="parentSize"
-                    initialValue={chunkConfig.parentSize}
-                  >
-                    <InputNumber 
-                      min={500} 
-                      max={10000} 
-                      step={100} 
-                      style={{ width: '100%' }}
-                      addonAfter="文字"
-                      disabled={!chunkConfig.parentChunk}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-              
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item 
-                    label="親チャンクオーバーラップ" 
-                    name="parentOverlap"
-                    initialValue={chunkConfig.parentOverlap}
-                  >
-                    <InputNumber 
-                      min={0} 
-                      max={1000} 
-                      step={50} 
-                      style={{ width: '100%' }}
-                      addonAfter="文字"
-                      disabled={!chunkConfig.parentChunk}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <div style={{ marginTop: '24px' }}>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                      親チャンクのサイズは子チャンクの2-10倍程度に設定することを推奨します
-                    </Text>
-                  </div>
-                </Col>
-              </Row>
-              
-              <Alert 
-                message="設定例"
-                description={
-                  <div>
-                    <div><strong>文書全体:</strong> 単一ファイル向け、全体をコンテキストとして使用</div>
-                    <div><strong>セクションごと:</strong> 章単位での分割、構造化された文書向け</div>
-                    <div><strong>固定サイズ:</strong> 均等な分割、一般的な文書向け</div>
-                  </div>
-                }
-                type="info"
-                style={{ marginTop: 16 }}
-              />
-            </Form>
-          </Panel>
-        </Collapse>
-      </Modal>
       
       {/* 新規フォルダ作成モーダル */}
       <Modal

@@ -162,13 +162,3 @@ npm run lint
 3. 変更をコミット (`git commit -m 'Add some AmazingFeature'`)
 4. ブランチにプッシュ (`git push origin feature/AmazingFeature`)
 5. プルリクエストを作成
-
-## 📄 ライセンス
-
-このプロジェクトはMITライセンスの下で公開されています - 詳細は[LICENSE](LICENSE)ファイルを参照してください
-
----
-
-<div align="center">
-SmartRAG チームが❤️を込めて開発
-</div>

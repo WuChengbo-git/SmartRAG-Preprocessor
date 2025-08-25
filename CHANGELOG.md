@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3] - 2025-08-25
+
+### Changed
+- アップロードUIの改善 - フォルダ管理とファイルアップロードの高さ揃え
+- チャンク設定ページの刷新 - ドロップダウン選択方式への変更
+- ナビゲーション名称変更 - 「ドキュメント処理」→「チャンク設定」
+
+### Enhanced
+- フォルダツリー表示 - フォルダ内ファイル表示機能追加（アイコン付き）
+- ルール設定UI - デフォルトルール選択時のみ詳細設定表示
+- アップロード状態表示 - プログレスバーからアイコン表示へ簡素化
+- カスタムルール管理 - API連携による定制规则1、定制规则2の管理
+
+### Added
+- ファイルタイプアイコン表示 - PDF、Word、Excel、PowerPoint、テキスト対応
+- リアルタイムルール編集 - デフォルトルール設定の即座反映
+- フォルダ別ルール適用 - 選択フォルダに対する個別ルール設定
+- UI高さ統一機能 - 左右パネルの完全な高さ揃え
+
+### Fixed
+- レイアウト高さ不整合 - カードコンポーネントの高さ統一
+- ファイル選択制限 - フォルダのみ選択可能、ファイル選択を無効化
+- 状態アイコン表示 - 回転アイコン（アップロード中）→チェックマーク（完了）
+
+### Technical
+- TypeScript インターフェース拡張 - ファイル情報とフォルダ構造の型安全性向上
+- Ant Design コンポーネント最適化 - Tree、Select、Form コンポーネントの効率化
+- 状態管理改善 - チャンクルール設定の動的更新システム
+
 ## [0.0.2] - 2025-08-21
 
 ### Changed

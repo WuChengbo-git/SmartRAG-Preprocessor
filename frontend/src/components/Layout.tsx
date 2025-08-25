@@ -42,7 +42,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     {
       key: '/processing',
       icon: <ProcessorOutlined />,
-      label: 'ドキュメント処理',
+      label: 'チャンク設定',
     },
     {
       key: '/editor',
@@ -165,6 +165,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           background: token.colorBgContainer,
           borderTop: `1px solid ${token.colorBorder}`,
           flexShrink: 0,
+          padding: '8px 24px',
+          minHeight: 'auto',
         }}>
           <Space>
             <span>処理状況: アイドル状態</span>

@@ -8,98 +8,160 @@ import {
   Select, 
   InputNumber, 
   Button, 
-  Table, 
-  Progress,
-  Tag,
+  Tree,
   Space,
   message,
-  Drawer,
+  Modal,
   Divider,
   Alert,
-  List,
-  Avatar
+  Switch,
+  Radio
 } from 'antd';
 import { 
   SettingOutlined, 
-  PlayCircleOutlined, 
-  PauseCircleOutlined,
-  EyeOutlined,
+  FolderOutlined,
+  BulbOutlined,
+  SaveOutlined,
   FileTextOutlined,
-  BulbOutlined
+  FilePdfOutlined,
+  FileWordOutlined,
+  FileExcelOutlined,
+  FilePptOutlined,
+  FileOutlined
 } from '@ant-design/icons';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { Option } = Select;
 
-interface ProcessingTask {
+interface FolderItem {
   id: string;
-  fileName: string;
-  fileType: string;
-  status: 'waiting' | 'processing' | 'completed' | 'failed';
-  progress: number;
-  chunks: number;
-  totalChunks: number;
-  config: {
-    chunkSize: number;
-    chunkOverlap: number;
-    chunkMethod: string;
-  };
-  startTime?: string;
-  endTime?: string;
-  error?: string;
+  name: string;
+  parentId?: string;
+  children?: FolderItem[];
+  files?: FileItem[];
+  fileCount?: number;
+}
+
+interface FileItem {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  folderId: string;
+}
+
+interface ChunkRule {
+  id: string;
+  name: string;
+  method: string;
+  size: number;
+  overlap: number;
+  parentChunk: boolean;
+  parentMethod: string;
+  parentSize: number;
+  parentOverlap: number;
 }
 
 const Processing: React.FC = () => {
-  const [form] = Form.useForm();
-  const [previewVisible, setPreviewVisible] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<ProcessingTask | null>(null);
+  const [selectedFolderId, setSelectedFolderId] = useState<string>('1');
+  const [selectedRuleId, setSelectedRuleId] = useState<string>('default');
+  const [expandedKeys, setExpandedKeys] = useState<string[]>(['1']);
   
-  const [tasks, setTasks] = useState<ProcessingTask[]>([
+  const [folderData, setFolderData] = useState<FolderItem[]>([
     {
       id: '1',
-      fileName: 'プレゼンテーション資料.pptx',
-      fileType: 'PowerPoint',
-      status: 'completed',
-      progress: 100,
-      chunks: 25,
-      totalChunks: 25,
-      config: {
-        chunkSize: 500,
-        chunkOverlap: 50,
-        chunkMethod: 'paragraph'
-      },
-      startTime: '2024-01-15 14:30',
-      endTime: '2024-01-15 14:32'
+      name: 'プロジェクトA',
+      fileCount: 5,
+      children: [
+        { 
+          id: '1-1', 
+          name: '資料', 
+          parentId: '1', 
+          fileCount: 3,
+          files: [
+            { id: 'f1', name: 'プレゼンテーション資料.pptx', type: 'pptx', size: 2048000, folderId: '1-1' },
+            { id: 'f2', name: '会議資料.pdf', type: 'pdf', size: 1024000, folderId: '1-1' },
+            { id: 'f3', name: '参考資料.docx', type: 'docx', size: 512000, folderId: '1-1' }
+          ]
+        },
+        { 
+          id: '1-2', 
+          name: 'マニュアル', 
+          parentId: '1', 
+          fileCount: 2,
+          files: [
+            { id: 'f4', name: 'ユーザーマニュアル.pdf', type: 'pdf', size: 5120000, folderId: '1-2' },
+            { id: 'f5', name: '操作ガイド.docx', type: 'docx', size: 1536000, folderId: '1-2' }
+          ]
+        }
+      ]
     },
     {
       id: '2',
-      fileName: 'マニュアル.pdf',
-      fileType: 'PDF',
-      status: 'processing',
-      progress: 65,
-      chunks: 13,
-      totalChunks: 20,
-      config: {
-        chunkSize: 800,
-        chunkOverlap: 100,
-        chunkMethod: 'page'
-      },
-      startTime: '2024-01-15 14:25'
+      name: 'プロジェクトB',
+      fileCount: 8,
+      children: [
+        { 
+          id: '2-1', 
+          name: '技術文書', 
+          parentId: '2', 
+          fileCount: 4,
+          files: [
+            { id: 'f6', name: 'API仕様書.docx', type: 'docx', size: 1024000, folderId: '2-1' },
+            { id: 'f7', name: 'データベース設計.xlsx', type: 'xlsx', size: 2048000, folderId: '2-1' },
+            { id: 'f8', name: 'システム構成図.pptx', type: 'pptx', size: 3072000, folderId: '2-1' },
+            { id: 'f9', name: 'テスト仕様書.pdf', type: 'pdf', size: 1536000, folderId: '2-1' }
+          ]
+        },
+        { 
+          id: '2-2', 
+          name: '仕様書', 
+          parentId: '2', 
+          fileCount: 4,
+          files: [
+            { id: 'f10', name: '要件定義書.docx', type: 'docx', size: 2048000, folderId: '2-2' },
+            { id: 'f11', name: '基本設計書.pdf', type: 'pdf', size: 4096000, folderId: '2-2' },
+            { id: 'f12', name: '詳細設計書.docx', type: 'docx', size: 3072000, folderId: '2-2' },
+            { id: 'f13', name: '運用手順書.pdf', type: 'pdf', size: 1024000, folderId: '2-2' }
+          ]
+        }
+      ]
+    }
+  ]);
+
+  const [chunkRules, setChunkRules] = useState<ChunkRule[]>([
+    {
+      id: 'default',
+      name: 'デフォルト規則',
+      method: 'paragraph',
+      size: 500,
+      overlap: 50,
+      parentChunk: false,
+      parentMethod: 'document',
+      parentSize: 1000,
+      parentOverlap: 100
     },
     {
-      id: '3',
-      fileName: 'データ分析.xlsx',
-      fileType: 'Excel',
-      status: 'failed',
-      progress: 0,
-      chunks: 0,
-      totalChunks: 0,
-      config: {
-        chunkSize: 300,
-        chunkOverlap: 30,
-        chunkMethod: 'sheet'
-      },
-      error: 'ファイル形式が対応していません'
+      id: 'custom1',
+      name: '定制規則1',
+      method: 'page',
+      size: 800,
+      overlap: 80,
+      parentChunk: true,
+      parentMethod: 'section',
+      parentSize: 2000,
+      parentOverlap: 200
+    },
+    {
+      id: 'custom2',
+      name: '定制規則2',
+      method: 'token',
+      size: 300,
+      overlap: 30,
+      parentChunk: false,
+      parentMethod: 'document',
+      parentSize: 1500,
+      parentOverlap: 150
     }
   ]);
 
@@ -111,348 +173,339 @@ const Processing: React.FC = () => {
     { value: 'token', label: 'トークンごと', description: 'トークン数を基準にして分割' }
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'success';
-      case 'processing': return 'processing';
-      case 'failed': return 'error';
-      case 'waiting': return 'default';
-      default: return 'default';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed': return '完了';
-      case 'processing': return '処理中';
-      case 'failed': return '失敗';
-      case 'waiting': return '待機中';
-      default: return '不明';
-    }
-  };
-
-  const handleStartProcessing = (taskId: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { ...task, status: 'processing', startTime: new Date().toLocaleString('ja-JP') }
-        : task
-    ));
-    message.success('処理を開始しました');
-  };
-
-  const handlePauseProcessing = (taskId: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { ...task, status: 'waiting' }
-        : task
-    ));
-    message.info('処理を一時停止しました');
-  };
-
-  const handlePreview = (task: ProcessingTask) => {
-    setSelectedTask(task);
-    setPreviewVisible(true);
-  };
-
-  const columns = [
-    {
-      title: 'ファイル名',
-      dataIndex: 'fileName',
-      key: 'fileName',
-      render: (text: string, record: ProcessingTask) => (
-        <Space>
-          <FileTextOutlined />
-          <div>
-            <div>{text}</div>
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              {record.fileType}
-            </Text>
-          </div>
-        </Space>
-      ),
-    },
-    {
-      title: '状態',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string, record: ProcessingTask) => (
-        <div>
-          <Tag color={getStatusColor(status)}>
-            {getStatusText(status)}
-          </Tag>
-          {status === 'processing' && (
-            <Progress 
-              percent={record.progress} 
-              size="small" 
-              style={{ marginTop: 4 }}
-            />
-          )}
-          {status === 'failed' && record.error && (
-            <div style={{ marginTop: 4 }}>
-              <Text type="danger" style={{ fontSize: '12px' }}>
-                {record.error}
-              </Text>
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      title: 'チャンク',
-      key: 'chunks',
-      render: (_: any, record: ProcessingTask) => (
-        <div>
-          <Text>{record.chunks} / {record.totalChunks}</Text>
-          {record.totalChunks > 0 && (
-            <Progress 
-              percent={Math.round((record.chunks / record.totalChunks) * 100)} 
-              showInfo={false}
-              size="small"
-              style={{ marginTop: 4 }}
-            />
-          )}
-        </div>
-      ),
-    },
-    {
-      title: '設定',
-      key: 'config',
-      render: (_: any, record: ProcessingTask) => (
-        <div>
-          <Text style={{ fontSize: '12px' }}>
-            サイズ: {record.config.chunkSize}
-          </Text>
-          <br />
-          <Text style={{ fontSize: '12px' }}>
-            方法: {chunkMethods.find(m => m.value === record.config.chunkMethod)?.label}
-          </Text>
-        </div>
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      render: (_: any, record: ProcessingTask) => (
-        <Space>
-          {record.status === 'waiting' && (
-            <Button 
-              type="primary" 
-              size="small"
-              icon={<PlayCircleOutlined />}
-              onClick={() => handleStartProcessing(record.id)}
-            >
-              開始
-            </Button>
-          )}
-          {record.status === 'processing' && (
-            <Button 
-              size="small"
-              icon={<PauseCircleOutlined />}
-              onClick={() => handlePauseProcessing(record.id)}
-            >
-              一時停止
-            </Button>
-          )}
-          {record.status === 'completed' && (
-            <Button 
-              size="small"
-              icon={<EyeOutlined />}
-              onClick={() => handlePreview(record)}
-            >
-              プレビュー
-            </Button>
-          )}
-        </Space>
-      ),
-    },
+  const parentChunkMethods = [
+    { value: 'document', label: 'ドキュメント全体', description: '文書全体を一つの親チャンクとして扱う' },
+    { value: 'section', label: 'セクションごと', description: '大きなセクション単位で分割' },
+    { value: 'page_group', label: 'ページ群ごと', description: '複数ページをまとめて分割' },
+    { value: 'token_large', label: '大きなトークン単位', description: '大きなトークン数で分割' },
+    { value: 'fixed_size', label: '固定サイズ', description: '指定された文字数で分割' }
   ];
 
-  const sampleChunks = [
-    {
-      id: 1,
-      content: 'このドキュメントは、SmartRAGシステムの概要と使用方法について説明します。RAG（Retrieval-Augmented Generation）は、検索機能を強化した生成AIの手法です。',
-      metadata: { page: 1, type: 'paragraph', tokens: 45 }
-    },
-    {
-      id: 2,
-      content: 'システムの主な機能には、文書の自動分割、ベクトル化、検索インデックスの構築が含まれます。これらの機能により、効率的な情報検索が可能になります。',
-      metadata: { page: 1, type: 'paragraph', tokens: 52 }
-    },
-    {
-      id: 3,
-      content: 'SmartRAGは多様な文書形式に対応しており、PDF、Word、Excel、PowerPointなどのファイルを処理できます。',
-      metadata: { page: 2, type: 'paragraph', tokens: 38 }
-    }
-  ];
+  const getFileIcon = (type: string) => {
+    if (type.includes('pdf')) return <FilePdfOutlined style={{ color: '#ff4d4f' }} />;
+    if (type.includes('docx') || type.includes('doc')) return <FileWordOutlined style={{ color: '#1890ff' }} />;
+    if (type.includes('xlsx') || type.includes('xls')) return <FileExcelOutlined style={{ color: '#52c41a' }} />;
+    if (type.includes('pptx') || type.includes('ppt')) return <FilePptOutlined style={{ color: '#fa8c16' }} />;
+    if (type.includes('txt')) return <FileTextOutlined style={{ color: '#722ed1' }} />;
+    return <FileOutlined style={{ color: '#8c8c8c' }} />;
+  };
+
+  const generateTreeData = (folders: FolderItem[]): any[] => {
+    return folders.map(folder => {
+      const children = [];
+      
+      // Add subfolders
+      if (folder.children) {
+        children.push(...generateTreeData(folder.children));
+      }
+      
+      // Add files
+      if (folder.files) {
+        children.push(...folder.files.map(file => ({
+          title: (
+            <Space>
+              {getFileIcon(file.type)}
+              <span style={{ fontSize: '12px' }}>{file.name}</span>
+            </Space>
+          ),
+          key: `file-${file.id}`,
+          isLeaf: true
+        })));
+      }
+
+      return {
+        title: (
+          <Space>
+            <FolderOutlined />
+            {folder.name}
+            <Text type="secondary" style={{ fontSize: '11px' }}>({folder.fileCount || 0})</Text>
+          </Space>
+        ),
+        key: folder.id,
+        children: children.length > 0 ? children : undefined
+      };
+    });
+  };
+
+  const getSelectedRule = () => {
+    return chunkRules.find(rule => rule.id === selectedRuleId) || chunkRules[0];
+  };
+
+  const handleApplyToFolder = () => {
+    const selectedFolder = folderData.find(f => f.id === selectedFolderId) || 
+                          folderData.flatMap(f => f.children || []).find(f => f.id === selectedFolderId);
+    const folderName = selectedFolder?.name || 'フォルダ';
+    const ruleName = getSelectedRule().name;
+    message.success(`${folderName}に${ruleName}を適用しました`);
+  };
+
 
   return (
     <div>
       <Title level={2} style={{ marginBottom: 24 }}>
-        処理モニタリング
+        チャンク設定
       </Title>
       
       <Alert
-        message="処理の進行状況"
-        description="アップロードされたファイルの処理状況をリアルタイムで確認できます。処理設定は「ファイル管理」ページで行ってください。"
+        message="フォルダ別チャンク設定"
+        description="各フォルダに対してチャンク分割ルールを設定できます。左側でフォルダを選択し、右側で詳細なルールを設定してください。"
         type="info"
         style={{ marginBottom: 16 }}
       />
       
       <Row gutter={16}>
-        <Col span={24}>
+        <Col span={6}>
           <Card 
             title={
               <Space>
-                <SettingOutlined />
-                処理キューと進行状況
+                <FolderOutlined />
+                フォルダ一覧
               </Space>
             }
-            extra={
-              <Space>
-                <Text type="secondary">リアルタイム更新</Text>
-                <Button size="small" icon={<PlayCircleOutlined />}>
-                  全て再開
-                </Button>
-                <Button size="small" icon={<PauseCircleOutlined />}>
-                  全て一時停止
-                </Button>
-              </Space>
-            }
+            size="small"
+            style={{ height: '100%' }}
+            bodyStyle={{ height: 'calc(100% - 57px)', overflow: 'auto' }}
           >
-            <Table 
-              columns={columns} 
-              dataSource={tasks} 
-              rowKey="id"
-              pagination={{ 
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) => 
-                  `${range[0]}-${range[1]} / ${total} 件`
+            <Tree
+              showIcon
+              defaultExpandedKeys={expandedKeys}
+              expandedKeys={expandedKeys}
+              onExpand={(keys) => setExpandedKeys(keys as string[])}
+              selectedKeys={[selectedFolderId]}
+              onSelect={(keys) => {
+                if (keys.length > 0 && !keys[0].toString().startsWith('file-')) {
+                  setSelectedFolderId(keys[0] as string);
+                }
               }}
-              size="middle"
+              treeData={generateTreeData(folderData)}
             />
           </Card>
         </Col>
-      </Row>
-
-      {/* 処理統計情報 */}
-      <Row gutter={16} style={{ marginTop: 16 }}>
-        <Col span={6}>
-          <Card size="small">
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>
-                {tasks.filter(t => t.status === 'completed').length}
-              </div>
-              <div style={{ color: '#666' }}>完了</div>
-            </div>
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card size="small">
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff' }}>
-                {tasks.filter(t => t.status === 'processing').length}
-              </div>
-              <div style={{ color: '#666' }}>処理中</div>
-            </div>
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card size="small">
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#faad14' }}>
-                {tasks.filter(t => t.status === 'waiting').length}
-              </div>
-              <div style={{ color: '#666' }}>待機中</div>
-            </div>
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card size="small">
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ff4d4f' }}>
-                {tasks.filter(t => t.status === 'failed').length}
-              </div>
-              <div style={{ color: '#666' }}>失敗</div>
-            </div>
-          </Card>
-        </Col>
-      </Row>
-
-      <Drawer
-        title="処理結果プレビュー"
-        width={720}
-        onClose={() => setPreviewVisible(false)}
-        open={previewVisible}
-      >
-        {selectedTask && (
-          <div>
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <Card size="small">
-                <Row gutter={16}>
-                  <Col span={12}>
-                    <Text strong>ファイル名:</Text>
-                    <br />
-                    <Text>{selectedTask.fileName}</Text>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>チャンク数:</Text>
-                    <br />
-                    <Text>{selectedTask.chunks} チャンク</Text>
-                  </Col>
-                </Row>
-                <Row gutter={16} style={{ marginTop: 16 }}>
-                  <Col span={12}>
-                    <Text strong>処理設定:</Text>
-                    <br />
-                    <Text>サイズ: {selectedTask.config.chunkSize}文字</Text>
-                    <br />
-                    <Text>方法: {chunkMethods.find(m => m.value === selectedTask.config.chunkMethod)?.label}</Text>
-                  </Col>
-                  <Col span={12}>
-                    <Text strong>処理時間:</Text>
-                    <br />
-                    <Text>開始: {selectedTask.startTime}</Text>
-                    <br />
-                    <Text>終了: {selectedTask.endTime}</Text>
-                  </Col>
-                </Row>
+        
+        <Col span={18}>
+          <Space direction="vertical" style={{ width: '100%', height: '100%' }} size="middle">
+            <Card 
+              title={
+                <Space>
+                  <SettingOutlined />
+                  チャンク分割ルール選択
+                </Space>
+              }
+              size="small"
+            >
+              <Row gutter={16} align="middle">
+                <Col span={6}>
+                  <Text strong>適用ルール:</Text>
+                </Col>
+                <Col span={12}>
+                  <Select 
+                    value={selectedRuleId} 
+                    onChange={setSelectedRuleId}
+                    style={{ width: '100%' }}
+                    size="middle"
+                  >
+                    {chunkRules.map(rule => (
+                      <Select.Option key={rule.id} value={rule.id}>
+                        {rule.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Col>
+                <Col span={6}>
+                  <Button 
+                    type="primary" 
+                    icon={<SaveOutlined />}
+                    onClick={handleApplyToFolder}
+                  >
+                    フォルダに適用
+                  </Button>
+                </Col>
+              </Row>
+            </Card>
+            
+            {selectedRuleId === 'default' && (
+              <Card 
+                title={
+                  <Space>
+                    <BulbOutlined />
+                    デフォルトルール詳細設定
+                  </Space>
+                }
+                size="small"
+                style={{ flex: 1 }}
+              >
+                {(() => {
+                  const rule = getSelectedRule();
+                  return (
+                    <Form layout="vertical" size="small">
+                      <Row gutter={24}>
+                        <Col span={12}>
+                          <Space direction="vertical" style={{ width: '100%' }}>
+                            <div>
+                              <Text strong>基本設定</Text>
+                              <Divider style={{ margin: '8px 0' }} />
+                              <Form.Item label="分割方法" style={{ marginBottom: 12 }}>
+                                <Select 
+                                  value={rule.method}
+                                  onChange={(value) => {
+                                    setChunkRules(prev => prev.map(r => 
+                                      r.id === 'default' ? { ...r, method: value } : r
+                                    ));
+                                  }}
+                                  style={{ width: '100%' }}
+                                >
+                                  {chunkMethods.map(method => (
+                                    <Select.Option key={method.value} value={method.value}>
+                                      {method.label}
+                                    </Select.Option>
+                                  ))}
+                                </Select>
+                              </Form.Item>
+                              
+                              <Row gutter={16}>
+                                <Col span={12}>
+                                  <Form.Item label="チャンクサイズ" style={{ marginBottom: 12 }}>
+                                    <InputNumber 
+                                      min={100} 
+                                      max={2000} 
+                                      step={100}
+                                      value={rule.size}
+                                      onChange={(value) => {
+                                        setChunkRules(prev => prev.map(r => 
+                                          r.id === 'default' ? { ...r, size: value || 500 } : r
+                                        ));
+                                      }}
+                                      style={{ width: '100%' }}
+                                      addonAfter="文字"
+                                    />
+                                  </Form.Item>
+                                </Col>
+                                <Col span={12}>
+                                  <Form.Item label="オーバーラップ" style={{ marginBottom: 12 }}>
+                                    <InputNumber 
+                                      min={0} 
+                                      max={500} 
+                                      step={10}
+                                      value={rule.overlap}
+                                      onChange={(value) => {
+                                        setChunkRules(prev => prev.map(r => 
+                                          r.id === 'default' ? { ...r, overlap: value || 0 } : r
+                                        ));
+                                      }}
+                                      style={{ width: '100%' }}
+                                      addonAfter="文字"
+                                    />
+                                  </Form.Item>
+                                </Col>
+                              </Row>
+                            </div>
+                            
+                            <div>
+                              <Row align="middle" style={{ marginBottom: 12 }}>
+                                <Col span={12}>
+                                  <Text strong>親子チャンク設定</Text>
+                                </Col>
+                                <Col span={12}>
+                                  <Switch 
+                                    checked={rule.parentChunk}
+                                    onChange={(checked) => {
+                                      setChunkRules(prev => prev.map(r => 
+                                        r.id === 'default' ? { ...r, parentChunk: checked } : r
+                                      ));
+                                    }}
+                                  />
+                                </Col>
+                              </Row>
+                              <Divider style={{ margin: '8px 0' }} />
+                              
+                              {rule.parentChunk && (
+                                <div>
+                                  <Form.Item label="親チャンク分割方法" style={{ marginBottom: 12 }}>
+                                    <Select 
+                                      value={rule.parentMethod}
+                                      onChange={(value) => {
+                                        setChunkRules(prev => prev.map(r => 
+                                          r.id === 'default' ? { ...r, parentMethod: value } : r
+                                        ));
+                                      }}
+                                      style={{ width: '100%' }}
+                                    >
+                                      {parentChunkMethods.map(method => (
+                                        <Select.Option key={method.value} value={method.value}>
+                                          {method.label}
+                                        </Select.Option>
+                                      ))}
+                                    </Select>
+                                  </Form.Item>
+                                  
+                                  <Row gutter={16}>
+                                    <Col span={12}>
+                                      <Form.Item label="親チャンクサイズ" style={{ marginBottom: 12 }}>
+                                        <InputNumber 
+                                          min={500} 
+                                          max={10000} 
+                                          step={100}
+                                          value={rule.parentSize}
+                                          onChange={(value) => {
+                                            setChunkRules(prev => prev.map(r => 
+                                              r.id === 'default' ? { ...r, parentSize: value || 1000 } : r
+                                            ));
+                                          }}
+                                          style={{ width: '100%' }}
+                                          addonAfter="文字"
+                                        />
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={12}>
+                                      <Form.Item label="親オーバーラップ" style={{ marginBottom: 12 }}>
+                                        <InputNumber 
+                                          min={0} 
+                                          max={1000} 
+                                          step={50}
+                                          value={rule.parentOverlap}
+                                          onChange={(value) => {
+                                            setChunkRules(prev => prev.map(r => 
+                                              r.id === 'default' ? { ...r, parentOverlap: value || 0 } : r
+                                            ));
+                                          }}
+                                          style={{ width: '100%' }}
+                                          addonAfter="文字"
+                                        />
+                                      </Form.Item>
+                                    </Col>
+                                  </Row>
+                                </div>
+                              )}
+                            </div>
+                          </Space>
+                        </Col>
+                        
+                        <Col span={12}>
+                          <Alert
+                            message="設定説明"
+                            description={chunkMethods.find(m => m.value === rule.method)?.description}
+                            type="info"
+                            showIcon
+                            style={{ marginBottom: 16 }}
+                          />
+                          {rule.parentChunk && (
+                            <Alert
+                              message="親子チャンク"
+                              description="大きなチャンク（親）と小さなチャンク（子）の2階層構造で、より精度の高い検索を実現します。親チャンクで大まかなコンテキストを把握し、子チャンクで詳細な情報を取得できます。"
+                              type="success"
+                              showIcon
+                            />
+                          )}
+                        </Col>
+                      </Row>
+                    </Form>
+                  );
+                })()}
               </Card>
-              
-              <Divider />
-              
-              <Title level={5}>分割されたチャンク</Title>
-              <List
-                dataSource={sampleChunks}
-                renderItem={(item, index) => (
-                  <List.Item>
-                    <List.Item.Meta
-                      avatar={<Avatar>{index + 1}</Avatar>}
-                      title={
-                        <Space>
-                          <Text>チャンク {item.id}</Text>
-                          <Tag>
-                            ページ {item.metadata.page}
-                          </Tag>
-                          <Tag>
-                            {item.metadata.tokens} トークン
-                          </Tag>
-                        </Space>
-                      }
-                      description={
-                        <Paragraph style={{ marginBottom: 0 }}>
-                          {item.content}
-                        </Paragraph>
-                      }
-                    />
-                  </List.Item>
-                )}
-              />
-            </Space>
-          </div>
-        )}
-      </Drawer>
+            )}
+          </Space>
+        </Col>
+      </Row>
     </div>
   );
 };
